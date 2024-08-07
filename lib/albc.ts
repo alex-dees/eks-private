@@ -4,7 +4,7 @@ import * as eks from 'aws-cdk-lib/aws-eks';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as s3Assets from 'aws-cdk-lib/aws-s3-assets';
 
-interface AlbcProps{
+export interface AlbcProps{
     repo: string,
     cluster: eks.Cluster
 }
@@ -39,8 +39,6 @@ export class Albc extends Construct{
               name: 'aws-load-balancer-controller'
           }
       }
-  });
-
+    });
   }
-    
 }

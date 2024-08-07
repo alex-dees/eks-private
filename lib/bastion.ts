@@ -8,31 +8,36 @@ export class Bastion extends Construct {
 
   constructor(scope: Construct, id: string, vpc: ec2.IVpc) {
     super(scope, id);
-
-    const asset = new s3Assets.Asset(this, 'S3Asset', {
-      path: 'assets/kubectl'
-    });
     
-    const userData = ec2.UserData.forLinux();
-    userData.addS3DownloadCommand({
-      bucket: asset.bucket,
-      bucketKey: asset.s3ObjectKey,
-      localFile: '/tmp/kubectl'
-    });
-    userData.addCommands(
-      'chmod +x /tmp/kubectl',
-      'cp /tmp/kubectl /usr/local/bin'
-    );
-
     this.host = new ec2.BastionHostLinux(this, 'Bastion', { 
       vpc,
       requireImdsv2: true,
       machineImage: ec2.MachineImage.latestAmazonLinux2023({ 
-        userData
+        userData: this.userData()
       })
     });
     
     this.host.role.addManagedPolicy(
       iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess'));
   }
+
+  private userData() {
+    const ud = ec2.UserData.forLinux();
+    const asset = new s3Assets.Asset(this, 'KubectlAsset', {
+      path: 'assets/kubectl'
+    });
+
+    ud.addS3DownloadCommand({
+      bucket: asset.bucket,
+      bucketKey: asset.s3ObjectKey,
+      localFile: '/tmp/kubectl'
+    });
+
+    ud.addCommands(
+      'chmod +x /tmp/kubectl',
+      'cp /tmp/kubectl /usr/local/bin'
+    );
+
+    return ud;
+  }  
 }
